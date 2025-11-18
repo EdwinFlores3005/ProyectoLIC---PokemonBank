@@ -91,7 +91,6 @@
         </div>
       </section>
 
-      <p class="text-muted small mt-3">* Interfaz de demostración. No hay cálculos reales de cuenta.</p>
     </div>
   </main>
 
@@ -100,7 +99,7 @@
     const colores = {
       depositos: '#22c55e', // verde
       retiros: '#ef4444', // rojo
-      pagos: '#f59e0b'  // amarillito
+      pagos: '#f59e0b'  // amarillo
     };
 
     // Referencias al DOM
@@ -108,19 +107,20 @@
     const nDepositos = document.getElementById('nDepositos');
     const nRetiros = document.getElementById('nRetiros');
     const nPagos = document.getElementById('nPagos');
-    const selTipo = document.getElementById('tipo');
-    const selRango = document.getElementById('rango');
+
+    const selRango = document.getElementById('rango');   // select de rango
+    const selTipo = document.getElementById('tipo');    // select de tipo de gráfico
     const btnAplicar = document.getElementById('btnAplicar');
 
-    let grafico = null;
+    let grafico = null; // aquí guardo el gráfico actual
 
-    // Leer transacciones del localStorage
+    // Lee transacciones desde localStorage
     function cargarTransacciones() {
       const data = localStorage.getItem("transacciones");
       return data ? JSON.parse(data) : [];
     }
 
-    // Contar cada tipo (SIN CONSULTAS)
+    // Cuenta depósitos / retiros / pagos dentro del rango seleccionado
     function obtenerDatosDesdeTransacciones(rangoDias) {
       const transacciones = cargarTransacciones();
 
@@ -137,32 +137,37 @@
         if (!t.fecha) return;
 
         const fechaT = new Date(t.fecha);
-        if (fechaT < limite) return;
+        if (fechaT < limite) return; // fuera del rango, la salto
 
         const tipo = (t.tipo || "").toLowerCase();
 
-        if (tipo.includes("depósito")) resultado.depositos++;
-        else if (tipo.includes("retiro")) resultado.retiros++;
-        else if (tipo.includes("pago")) resultado.pagos++;
+        if (tipo.includes("depósito")) {
+          resultado.depositos++;
+        } else if (tipo.includes("retiro")) {
+          resultado.retiros++;
+        } else if (tipo.includes("pago")) {
+          resultado.pagos++;
+        }
       });
 
       return resultado;
     }
 
-    // Actualiza los totales del resumen
+    // Actualiza los numeritos de abajo
     function actualizarTotales(data) {
       nDepositos.textContent = data.depositos;
       nRetiros.textContent = data.retiros;
       nPagos.textContent = data.pagos;
     }
 
-    // Construir configuración de Chart.js sin Consultas
-    function getConfig(tipo, data) {
+    // Configuración del gráfico según el tipo (barras o dona)
+    function getConfig(tipoGrafico, data) {
       const etiquetas = ['Depósitos', 'Retiros', 'Pagos'];
       const valores = [data.depositos, data.retiros, data.pagos];
       const fondos = [colores.depositos, colores.retiros, colores.pagos];
 
-      if (tipo === 'doughnut') {
+      if (tipoGrafico === 'doughnut') {
+        // Gráfico de dona
         return {
           type: 'doughnut',
           data: {
@@ -182,6 +187,7 @@
         };
       }
 
+      // Gráfico de barras (por defecto)
       return {
         type: 'bar',
         data: {
@@ -194,7 +200,9 @@
         },
         options: {
           responsive: true,
-          plugins: { legend: { display: false } },
+          plugins: {
+            legend: { display: false }
+          },
           scales: {
             y: {
               beginAtZero: true,
@@ -205,26 +213,38 @@
       };
     }
 
+    // Esta función se llama cada vez que queremos “refrescar” el gráfico
     function actualizarGrafico() {
-      const rangoDias = parseInt(selRango.value, 10) || 30;
-      const tipo = selTipo.value || 'bar';
+      const rangoDias = parseInt(selRango.value, 10) || 30;   // 30, 90 o 365
+      const tipo = selTipo.value || 'bar';               // 'bar' o 'doughnut'
 
       const datos = obtenerDatosDesdeTransacciones(rangoDias);
 
-      if (grafico) grafico.destroy();
+      // Si ya había un gráfico dibujado, lo destruyo antes de crear otro
+      if (grafico) {
+        grafico.destroy();
+      }
 
       grafico = new Chart(ctx, getConfig(tipo, datos));
       actualizarTotales(datos);
     }
 
+    // Cuando cargue la página
     document.addEventListener("DOMContentLoaded", () => {
+      // Pinta el gráfico inicial con los valores por defecto de los selects
       actualizarGrafico();
 
-      btnAplicar.addEventListener("click", () => {
-        actualizarGrafico();
-      });
+      // Botón "Aplicar" vuelve a generar el gráfico con lo seleccionado
+      if (btnAplicar) {
+        btnAplicar.addEventListener("click", (e) => {
+          e.preventDefault();
+          actualizarGrafico();
+        });
+      }
+
     });
   </script>
+
 
 
 

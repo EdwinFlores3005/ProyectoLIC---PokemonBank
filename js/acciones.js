@@ -1,6 +1,4 @@
-// --------------------------------------
-// Funciones de apoyo para LocalStorage
-// --------------------------------------
+// Funciones para LocalStorage
 
 function cargarUsuario() {
   const data = localStorage.getItem("usuario");
@@ -40,19 +38,30 @@ function registrarTransaccion(tipo, monto, detalle) {
 }
 
 
-// --------------------------------------
 // Inicialización de la pantalla
-// --------------------------------------
 
 function actualizarSaldoEnPantalla() {
   const usuario = cargarUsuario();
+  if (!usuario) return;
+
   const saldoSpan = document.getElementById("saldoActual");
+  const nombreSpan = document.getElementById("nombreUsuario");
+  const cuentaSpan = document.getElementById("numeroCuenta");
 
-  if (!usuario || !saldoSpan) return;
+  // Actualizar saldo
+  if (saldoSpan) {
+    saldoSpan.textContent = `$ ${usuario.saldo.toFixed(2)}`;
+  }
 
-  // Solo formateo el número para mostrarlo bonito
-  saldoSpan.textContent = `$ ${usuario.saldo.toFixed(2)}`;
+  if (nombreSpan) {
+    nombreSpan.textContent = usuario.nombre;
+  }
+
+  if (cuentaSpan) {
+    cuentaSpan.textContent = usuario.cuenta;
+  }
 }
+
 
 function verificarSesion() {
   const usuario = cargarUsuario();
@@ -63,11 +72,6 @@ function verificarSesion() {
     return;
   }
 }
-
-
-// --------------------------------------
-// Acciones principales
-// --------------------------------------
 
 // Depositar dinero
 function manejarDeposito() {
@@ -219,9 +223,7 @@ function manejarPagoServicios() {
 }
 
 
-// --------------------------------------
 // Eventos cuando carga la página
-// --------------------------------------
 
 document.addEventListener("DOMContentLoaded", () => {
   verificarSesion();
@@ -252,4 +254,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+
+
 
